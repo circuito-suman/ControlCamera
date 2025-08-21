@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_ControlCamera_FILE /home/circuito/AMT/ControlCamera/ControlCamera/build/Desktop_Qt_6_8_0-Debug/ControlCamera)
-set(__QT_DEPLOY_TARGET_ControlCamera_TYPE EXECUTABLE)
