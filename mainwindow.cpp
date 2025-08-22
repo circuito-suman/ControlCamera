@@ -2,20 +2,33 @@
 #include <QFile>
 #include <QTextStream>
 #include <QTextEdit>
+#include <QPushButton>
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
 
     int camIndices[] = {0};
-    int numCams = sizeof(camIndices) / sizeof(camIndices[0]);
+    numCams = sizeof(camIndices) / sizeof(camIndices[0]);
 
     for (int i = 0; i < numCams; ++i) {
         cameras[i] = new ControlCamera(camIndices[i], this);
         if (!cameras[i]->openCamera()) {
             cameras[i]->closeCamera();
         }
-        tabWidget->addTab(cameras[i], QString("Camera %1").arg(i + 1));
+
+        QWidget* tabContainer = new QWidget(this);
+        QVBoxLayout* tabLayout = new QVBoxLayout(tabContainer);
+        tabLayout->addWidget(cameras[i]);
+
+        QPushButton* saveBtn = new QPushButton("Save Settings", tabContainer);
+        tabLayout->addWidget(saveBtn);
+
+        connect(saveBtn, &QPushButton::clicked, this, [this, i]() {
+            onSaveButtonClicked(i);
+        });
+
+        tabWidget->addTab(tabContainer, QString("Camera %1").arg(i + 1));
     }
 
 
@@ -39,7 +52,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 }
 
 MainWindow::~MainWindow() {
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < numCams; ++i) {
         cameras[i]->closeCamera();
     }
 }
@@ -55,4 +68,11 @@ QString MainWindow::loadManualFromFile(const QString& filePath) const {
     QString content = in.readAll();
     file.close();
     return content;
+}
+
+
+void MainWindow::onSaveButtonClicked(int cameraIndex) {
+    if (cameraIndex >= 0 && cameraIndex < 4 && cameras[cameraIndex]) {
+        cameras[cameraIndex]->saveConfiguration();
+    }
 }

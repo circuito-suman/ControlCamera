@@ -11,7 +11,8 @@ public:
     MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
     QString loadManualFromFile(const QString& filePath) const;
-
+    void onSaveButtonClicked(int cameraIndex);
+    int numCams;
 
 private:
     QTabWidget* tabWidget;

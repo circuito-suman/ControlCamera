@@ -4,6 +4,8 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QDebug>
+#include <QSettings>
+
 
 ControlCamera::ControlCamera(int deviceIndex, QWidget* parent)
     : QWidget(parent), fd(-1), deviceIndex(deviceIndex) {
@@ -11,6 +13,7 @@ ControlCamera::ControlCamera(int deviceIndex, QWidget* parent)
 }
 
 ControlCamera::~ControlCamera() {
+    saveConfiguration();
     closeCamera();
 }
 
@@ -38,6 +41,7 @@ bool ControlCamera::openCamera() {
 
     setupControlsFromV4L2();
     loadInitialControlValues();
+    loadConfiguration();      // Load saved user config
     updateControlStates();
 
     return true;
@@ -316,4 +320,81 @@ void ControlCamera::updateControlStates() {
     }
 }
 
+
+
+void ControlCamera::saveConfiguration() {
+    QSettings settings("AMT", "ControlCamera");
+    QString group = QString("Camera%1").arg(deviceIndex);
+    settings.beginGroup(group);
+
+    settings.setValue("Brightness", brightnessSlider->value());
+    qDebug() << "Saved Brightness:" << brightnessSlider->value();
+
+    settings.setValue("Contrast", contrastSlider->value());
+    qDebug() << "Saved Contrast:" << contrastSlider->value();
+
+    settings.setValue("Saturation", saturationSlider->value());
+    qDebug() << "Saved Saturation:" << saturationSlider->value();
+
+    settings.setValue("Hue", hueSlider->value());
+    qDebug() << "Saved Hue:" << hueSlider->value();
+
+    settings.setValue("WhiteBalanceAuto", wbAutoCheck->isChecked());
+    qDebug() << "Saved WhiteBalanceAuto:" << wbAutoCheck->isChecked();
+
+    settings.setValue("Gamma", gammaSlider->value());
+    qDebug() << "Saved Gamma:" << gammaSlider->value();
+
+    settings.setValue("PowerLineFrequency", powerLineFreqCombo->currentData());
+    qDebug() << "Saved PowerLineFrequency:" << powerLineFreqCombo->currentData();
+
+    settings.setValue("Sharpness", sharpnessSlider->value());
+    qDebug() << "Saved Sharpness:" << sharpnessSlider->value();
+
+    settings.setValue("BacklightCompensation", backlightCompSlider->value());
+    qDebug() << "Saved BacklightCompensation:" << backlightCompSlider->value();
+
+    settings.setValue("ExposureMode", autoExposureCombo->currentData());
+    qDebug() << "Saved ExposureMode:" << autoExposureCombo->currentData();
+
+    qDebug() << "Saved All Configurations \n";
+
+    settings.endGroup();
+}
+
+
+void ControlCamera::loadConfiguration() {
+    QSettings settings("AMT", "ControlCamera");
+    QString group = QString("Camera%1").arg(deviceIndex);
+    settings.beginGroup(group);
+
+    if (settings.contains("Brightness"))
+        brightnessSlider->setValue(settings.value("Brightness").toInt());
+    if (settings.contains("Contrast"))
+        contrastSlider->setValue(settings.value("Contrast").toInt());
+    if (settings.contains("Saturation"))
+        saturationSlider->setValue(settings.value("Saturation").toInt());
+    if (settings.contains("Hue"))
+        hueSlider->setValue(settings.value("Hue").toInt());
+    if (settings.contains("WhiteBalanceAuto"))
+        wbAutoCheck->setChecked(settings.value("WhiteBalanceAuto").toBool());
+    if (settings.contains("Gamma"))
+        gammaSlider->setValue(settings.value("Gamma").toInt());
+    if (settings.contains("PowerLineFrequency")) {
+        int val = settings.value("PowerLineFrequency").toInt();
+        int idx = powerLineFreqCombo->findData(val);
+        if (idx != -1) powerLineFreqCombo->setCurrentIndex(idx);
+    }
+    if (settings.contains("Sharpness"))
+        sharpnessSlider->setValue(settings.value("Sharpness").toInt());
+    if (settings.contains("BacklightCompensation"))
+        backlightCompSlider->setValue(settings.value("BacklightCompensation").toInt());
+    if (settings.contains("ExposureMode")) {
+        int val = settings.value("ExposureMode").toInt();
+        int idx = autoExposureCombo->findData(val);
+        if (idx != -1) autoExposureCombo->setCurrentIndex(idx);
+    }
+
+    settings.endGroup();
+}
 

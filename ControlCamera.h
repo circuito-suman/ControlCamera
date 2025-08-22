@@ -26,6 +26,13 @@ public:
     bool setControl(__u32 id, int value);
     int getControl(__u32 id);
 
+
+    // Save Settings
+
+    void loadConfiguration();
+    void saveConfiguration();
+
+
 private slots:
     void grabFrame();
 
@@ -60,5 +67,7 @@ private:
     void setupControlsFromV4L2();
     void loadInitialControlValues();
     void updateControlStates();
+
+
 
 };
