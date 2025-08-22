@@ -1,0 +1,5 @@
+/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles/ControlCamera.dir
+/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles/edit_cache.dir
+/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles/rebuild_cache.dir
+/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles/ControlCamera_autogen_timestamp_deps.dir
+/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles/ControlCamera_autogen.dir
