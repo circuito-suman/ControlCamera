@@ -84,8 +84,8 @@ clean: CMakeFiles/ControlCamera_autogen.dir/clean
 # Target rules for target CMakeFiles/ControlCamera.dir
 
 # All Build rule for target.
-CMakeFiles/ControlCamera.dir/all: CMakeFiles/ControlCamera_autogen_timestamp_deps.dir/all
 CMakeFiles/ControlCamera.dir/all: CMakeFiles/ControlCamera_autogen.dir/all
+CMakeFiles/ControlCamera.dir/all: CMakeFiles/ControlCamera_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ControlCamera.dir/build.make CMakeFiles/ControlCamera.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ControlCamera.dir/build.make CMakeFiles/ControlCamera.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target ControlCamera"
