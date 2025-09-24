@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         }
 
         // Load the vein detection model
-        if (!cameras[i]->loadVeinModel("/home/circuito/AMT/ControlCamera/ControlCamera/veinfinder.pt"))
+        if (!cameras[i]->loadVeinModel("/home/circuito/AMT/ControlCamera/ControlCamera/VEIN\FINDER\V1.pt"))
         {
             qWarning() << "Failed to load vein detection model for camera" << i;
         }

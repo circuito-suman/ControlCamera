@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QScrollArea>
 
+
 ControlCamera::ControlCamera(int deviceIndex, QWidget *parent)
     : QWidget(parent), fd(-1), deviceIndex(deviceIndex), modelLoaded(false), veinDetectionEnabled(true)
 {
@@ -69,6 +70,7 @@ void ControlCamera::closeCamera()
     {
         ::close(fd);
         fd = -1;
+
     }
 }
 
