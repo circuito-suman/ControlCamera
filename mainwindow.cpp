@@ -3,13 +3,16 @@
 #include <QTextStream>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QDir>
+#include <QCoreApplication>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
 
-    int camIndices[] = {0};
+    // Use simple hardcoded values instead of ConfigLoader
+    int camIndices[] = {0}; // Use camera 0
     numCams = sizeof(camIndices) / sizeof(camIndices[0]);
 
     for (int i = 0; i < numCams; ++i)
@@ -20,10 +23,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             cameras[i]->closeCamera();
         }
 
-        // Load the vein detection model (.pt format)
-        if (!cameras[i]->loadVeinModel("/home/circuito/AMT/ControlCamera/ControlCamera/veinmodel.pt"))
+        // Load the vein detection model (.pt format) - use absolute path
+        QString modelPath = "/home/circuito/AMT/ControlCamera/ControlCamera/veinmodel.pt";
+        if (!cameras[i]->loadVeinModel(modelPath.toStdString()))
         {
-            qWarning() << "Failed to load vein detection model for camera" << i;
+            qWarning() << "Failed to load vein detection model for camera" << i << "from" << modelPath;
         }
 
         QWidget *tabContainer = new QWidget(this);
