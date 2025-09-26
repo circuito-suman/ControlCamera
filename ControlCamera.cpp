@@ -8,10 +8,19 @@
 #include <QFile>
 #include <QScrollArea>
 
+// Initialize static member
+bool ControlCamera::python_initialized = false;
 
 ControlCamera::ControlCamera(int deviceIndex, QWidget *parent)
     : QWidget(parent), fd(-1), deviceIndex(deviceIndex), modelLoaded(false), veinDetectionEnabled(true)
 {
+    // Initialize Python interpreter if not already done
+    if (!python_initialized)
+    {
+        pybind11::initialize_interpreter();
+        python_initialized = true;
+    }
+
     setupUI();
 }
 
@@ -19,6 +28,9 @@ ControlCamera::~ControlCamera()
 {
     saveConfiguration();
     closeCamera();
+
+    // Note: Python interpreter cleanup is handled by pybind11 automatically
+    // Don't call pybind11::finalize_interpreter() here as other instances might still need it
 }
 
 bool ControlCamera::openCamera()
@@ -70,7 +82,6 @@ void ControlCamera::closeCamera()
     {
         ::close(fd);
         fd = -1;
-
     }
 }
 
@@ -687,30 +698,75 @@ bool ControlCamera::loadVeinModel(const std::string &modelPath)
             return false;
         }
 
-        qDebug() << "Attempting to load model from:" << QString::fromStdString(modelPath);
+        qDebug() << "Attempting to load Python YOLO model from:" << QString::fromStdString(modelPath);
         qDebug() << "Model file size:" << modelFile.size() << "bytes";
 
-        // Load the PyTorch model
-        veinModel = torch::jit::load(modelPath);
-        veinModel.eval(); // Set to evaluation mode
+        // Import Python module and initialize detector
+        pybind11::module_ sys = pybind11::module_::import("sys");
+        sys.attr("path").attr("insert")(0, "/home/circuito/AMT/ControlCamera/ControlCamera");
+
+        yolo_module = pybind11::module_::import("yolo_detector");
+
+        // Initialize the detector with model and class paths
+        std::string classPath = "/home/circuito/AMT/ControlCamera/ControlCamera/veinclasses.txt";
+        bool initialized = yolo_module.attr("initialize_detector")(modelPath, classPath).cast<bool>();
+
+        if (!initialized)
+        {
+            qWarning() << "Failed to initialize Python YOLO detector";
+            modelLoaded = false;
+            return false;
+        }
+
+        // Get class names from Python
+        auto py_class_names = yolo_module.attr("get_class_names")().cast<std::vector<std::string>>();
+        classNames = py_class_names;
+
         modelLoaded = true;
-        qDebug() << "Vein detection model loaded successfully from" << QString::fromStdString(modelPath);
+        qDebug() << "Python YOLO model loaded successfully from" << QString::fromStdString(modelPath);
+        qDebug() << "Loaded" << classNames.size() << "class names";
+
         return true;
     }
-    catch (const c10::Error &e)
+    catch (const std::exception &e)
     {
-        qWarning() << "Error loading vein detection model:" << e.what();
-        qWarning() << "The model file may be corrupted or incompatible.";
+        qWarning() << "Exception loading Python model:" << e.what();
+        qWarning() << "The model file may be corrupted or Python dependencies missing.";
         qWarning() << "Continuing with test detection mode enabled.";
         modelLoaded = false;
         return false;
     }
-    catch (const std::exception &e)
+}
+
+bool ControlCamera::loadClassNames(const std::string &classPath)
+{
+    classNames.clear();
+    std::ifstream ifs(classPath);
+
+    if (!ifs.is_open())
     {
-        qWarning() << "Standard exception loading model:" << e.what();
-        modelLoaded = false;
+        qWarning() << "Could not open class names file:" << QString::fromStdString(classPath);
+        // Use default class names
+        classNames.push_back("vein");
         return false;
     }
+
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        if (!line.empty())
+        {
+            classNames.push_back(line);
+        }
+    }
+
+    if (classNames.empty())
+    {
+        classNames.push_back("vein"); // Default fallback
+    }
+
+    qDebug() << "Loaded" << classNames.size() << "class names";
+    return true;
 }
 
 void ControlCamera::enableVeinDetection(bool enable)
@@ -769,71 +825,9 @@ std::vector<Detection> ControlCamera::runDetection(const cv::Mat &inputFrame)
 
     try
     {
-        // Original PyTorch model detection code (if model is loaded)
-        cv::Mat resizedFrame;
-        cv::resize(inputFrame, resizedFrame, cv::Size(640, 640));
-        resizedFrame.convertTo(resizedFrame, CV_32F, 1.0 / 255.0);
-
-        cv::cvtColor(resizedFrame, resizedFrame, cv::COLOR_BGR2RGB);
-
-        auto tensor = torch::from_blob(
-            resizedFrame.data,
-            {1, resizedFrame.rows, resizedFrame.cols, 3},
-            torch::kFloat);
-
-        tensor = tensor.permute({0, 3, 1, 2});
-
-        std::vector<torch::jit::IValue> inputs;
-        inputs.push_back(tensor);
-
-        at::Tensor output = veinModel.forward(inputs).toTensor();
-
-        if (output.dim() == 3 && output.size(2) >= 84)
-        {
-            output = output.squeeze(0);
-
-            float scaleX = static_cast<float>(inputFrame.cols) / 640.0f;
-            float scaleY = static_cast<float>(inputFrame.rows) / 640.0f;
-
-            for (int i = 0; i < output.size(0); i++)
-            {
-                auto detection = output[i];
-
-                float x_center = detection[0].item<float>() * scaleX;
-                float y_center = detection[1].item<float>() * scaleY;
-                float width = detection[2].item<float>() * scaleX;
-                float height = detection[3].item<float>() * scaleY;
-
-                int x = static_cast<int>(x_center - width / 2);
-                int y = static_cast<int>(y_center - height / 2);
-                int w = static_cast<int>(width);
-                int h = static_cast<int>(height);
-
-                float maxConfidence = 0.0f;
-                int classId = 0;
-
-                for (int j = 4; j < detection.size(0); j++)
-                {
-                    float confidence = detection[j].item<float>();
-                    if (confidence > maxConfidence)
-                    {
-                        maxConfidence = confidence;
-                        classId = j - 4;
-                    }
-                }
-
-                if (maxConfidence > visualConfig.confidenceThreshold)
-                {
-                    Detection det;
-                    det.boundingBox = cv::Rect(x, y, w, h);
-                    det.confidence = maxConfidence;
-                    det.classId = classId;
-                    det.className = "vein";
-
-                    detections.push_back(det);
-                }
-            }
-        }
+        // Use OpenCV DNN for detection
+        cv::Mat inputClone = inputFrame.clone();
+        detectWithPython(inputClone, detections);
     }
     catch (const std::exception &e)
     {
@@ -842,6 +836,73 @@ std::vector<Detection> ControlCamera::runDetection(const cv::Mat &inputFrame)
 
     return detections;
 }
+
+cv::Mat ControlCamera::formatForYolo(const cv::Mat &source)
+{
+    int col = source.cols;
+    int row = source.rows;
+    int _max = std::max(col, row);
+    cv::Mat result = cv::Mat::zeros(_max, _max, CV_8UC3);
+    source.copyTo(result(cv::Rect(0, 0, col, row)));
+    return result;
+}
+
+void ControlCamera::detectWithPython(const cv::Mat &image, std::vector<Detection> &output)
+{
+    output.clear();
+
+    if (!modelLoaded)
+        return;
+
+    try
+    {
+        // Convert OpenCV Mat to numpy array for Python
+        pybind11::array_t<uint8_t> np_array = pybind11::array_t<uint8_t>(
+            {image.rows, image.cols, image.channels()},
+            {sizeof(uint8_t) * image.cols * image.channels(), sizeof(uint8_t) * image.channels(), sizeof(uint8_t)},
+            image.data);
+
+        // Call Python detection function
+        auto result = yolo_module.attr("detect_veins")(np_array, CONFIDENCE_THRESHOLD);
+        auto py_tuple = result.cast<pybind11::tuple>();
+
+        // Extract results from Python tuple
+        auto boxes = py_tuple[0].cast<pybind11::array_t<int32_t>>();
+        auto confidences = py_tuple[1].cast<pybind11::array_t<float>>();
+        auto class_ids = py_tuple[2].cast<pybind11::array_t<int32_t>>();
+        auto class_names = py_tuple[3].cast<std::vector<std::string>>();
+
+        // Convert to Detection objects
+        auto boxes_ptr = boxes.unchecked<2>();
+        auto conf_ptr = confidences.unchecked<1>();
+        auto ids_ptr = class_ids.unchecked<1>();
+
+        for (int i = 0; i < boxes.shape(0); i++)
+        {
+            Detection detection;
+            detection.boundingBox = cv::Rect(boxes_ptr(i, 0), boxes_ptr(i, 1),
+                                             boxes_ptr(i, 2), boxes_ptr(i, 3));
+            detection.confidence = conf_ptr(i);
+            detection.classId = ids_ptr(i);
+
+            if (i < class_names.size())
+            {
+                detection.className = class_names[i];
+            }
+            else
+            {
+                detection.className = "unknown";
+            }
+
+            output.push_back(detection);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        qWarning() << "Error in Python detection:" << e.what();
+    }
+}
+
 cv::Mat ControlCamera::drawDetections(const cv::Mat &frame, const std::vector<Detection> &detections)
 {
     cv::Mat result = frame.clone();
@@ -1261,6 +1322,33 @@ cv::Mat ControlCamera::applyVeinEnhancement(const cv::Mat &frame, const cv::Mat 
     cv::addWeighted(frame, veinConfig.enhancementAlpha, inverted, veinConfig.enhancementBeta, 0, result);
 
     return result;
+}
+
+cv::Mat ControlCamera::applyVeinEnhancementForDetection(const cv::Mat &frame)
+{
+    // Vein enhancement preprocessing similar to Python approach
+    cv::Mat enhanced_frame;
+
+    // Convert to grayscale
+    cv::Mat gray;
+    if (frame.channels() == 3)
+    {
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+    }
+    else
+    {
+        gray = frame.clone();
+    }
+
+    // Apply CLAHE for contrast enhancement
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
+    cv::Mat gray_enhanced;
+    clahe->apply(gray, gray_enhanced);
+
+    // Convert back to BGR for YOLO detection
+    cv::cvtColor(gray_enhanced, enhanced_frame, cv::COLOR_GRAY2BGR);
+
+    return enhanced_frame;
 }
 
 std::vector<Detection> ControlCamera::findVeinRegions(const cv::Mat &binaryFrame)

@@ -17,11 +17,13 @@
 // Register cv::Scalar as a QVariant type
 Q_DECLARE_METATYPE(cv::Scalar)
 
-// Add PyTorch includes
+// Add Pybind11 for Python integration (with Qt compatibility)
 #undef slots
-
-#include <torch/script.h>
-#include <torch/torch.h>
+#include <pybind11/embed.h>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+#define slots Q_SLOTS
+#include <fstream>
 
 // Detection result structure
 struct Detection
@@ -109,8 +111,11 @@ public:
     void loadConfiguration();
     void saveConfiguration();
 
-    // Load the vein detection model
+    // Load the vein detection model (ONNX format)
     bool loadVeinModel(const std::string &modelPath);
+
+    // Load class names from file
+    bool loadClassNames(const std::string &classPath);
 
     // Enable/disable vein detection
     void enableVeinDetection(bool enable);
@@ -153,12 +158,19 @@ private:
     QComboBox *autoExposureCombo;
     // void grabFrame();
 
-    // PyTorch model members
-    torch::jit::script::Module veinModel;
+    // Python YOLO model members
+    pybind11::module_ yolo_module;
+    std::vector<std::string> classNames;
     bool modelLoaded;
     bool veinDetectionEnabled;
     VisualizationConfig visualConfig;
     VeinProcessingConfig veinConfig;
+
+    // Python interpreter guard
+    static bool python_initialized;
+
+    // Model constants
+    static constexpr float CONFIDENCE_THRESHOLD = 0.3f;
 
     // Process frame through the model
     cv::Mat processFrameWithModel(const cv::Mat &inputFrame);
@@ -174,10 +186,14 @@ private:
     cv::Mat applyAdaptiveThreshold(const cv::Mat &frame);
     cv::Mat applyMorphology(const cv::Mat &frame);
     cv::Mat applyVeinEnhancement(const cv::Mat &frame, const cv::Mat &enhanced);
+    cv::Mat applyVeinEnhancementForDetection(const cv::Mat &frame);
     std::vector<Detection> findVeinRegions(const cv::Mat &binaryFrame);
 
     // Detection and visualization methods
     std::vector<Detection> runDetection(const cv::Mat &inputFrame);
+    void detectWithPython(const cv::Mat &image, std::vector<Detection> &output);
+    cv::Mat formatForYolo(const cv::Mat &source);
+    cv::Mat matToNumpyArray(const cv::Mat &mat);
     cv::Mat drawDetections(const cv::Mat &frame, const std::vector<Detection> &detections);
     void drawBoundingBox(cv::Mat &frame, const Detection &detection);
     void drawLabel(cv::Mat &frame, const Detection &detection, const cv::Point &position);

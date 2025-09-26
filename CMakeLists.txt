@@ -8,10 +8,8 @@ set(CMAKE_AUTORCC ON)               # If you use Qt resource files
 
 find_package(Qt6 COMPONENTS Core Widgets Gui REQUIRED)
 find_package(OpenCV REQUIRED)
-
-# Add LibTorch support
-find_package(Torch REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 REQUIRED)
 
 add_executable(ControlCamera
     main.cpp
@@ -21,10 +19,13 @@ add_executable(ControlCamera
     ControlCamera.h
 )
 
+target_include_directories(ControlCamera PRIVATE ${Python3_INCLUDE_DIRS})
+
 target_link_libraries(ControlCamera PRIVATE 
     Qt6::Core 
     Qt6::Widgets 
     Qt6::Gui 
     ${OpenCV_LIBS}
-    ${TORCH_LIBRARIES}
+    pybind11::embed
+    ${Python3_LIBRARIES}
 )

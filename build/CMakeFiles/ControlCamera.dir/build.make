@@ -185,9 +185,7 @@ ControlCamera: /usr/local/lib/libopencv_wechat_qrcode.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_xfeatures2d.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_xobjdetect.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_xphoto.so.4.12.0
-ControlCamera: /usr/local/lib/libtorch.so
-ControlCamera: /usr/local/lib/libc10.so
-ControlCamera: /usr/local/lib/libkineto.a
+ControlCamera: /usr/lib/x86_64-linux-gnu/libpython3.13.so
 ControlCamera: /usr/local/lib/libopencv_shape.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_highgui.so.4.12.0
 ControlCamera: /usr/lib/x86_64-linux-gnu/libQt6Widgets.so.6.8.2
@@ -213,7 +211,7 @@ ControlCamera: /usr/local/lib/libopencv_flann.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_photo.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_imgproc.so.4.12.0
 ControlCamera: /usr/local/lib/libopencv_core.so.4.12.0
-ControlCamera: /usr/local/lib/libc10.so
+ControlCamera: /usr/lib/x86_64-linux-gnu/libpython3.13.so
 ControlCamera: CMakeFiles/ControlCamera.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/circuito/AMT/ControlCamera/ControlCamera/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable ControlCamera"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/ControlCamera.dir/link.txt --verbose=$(VERBOSE)

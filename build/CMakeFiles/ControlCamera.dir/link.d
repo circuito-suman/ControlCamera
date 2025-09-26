@@ -40,9 +40,7 @@ ControlCamera: \
   /usr/local/lib/libopencv_xfeatures2d.so.4.12.0 \
   /usr/local/lib/libopencv_xobjdetect.so.4.12.0 \
   /usr/local/lib/libopencv_xphoto.so.4.12.0 \
-  /usr/local/lib/libtorch.so \
-  /usr/local/lib/libc10.so \
-  /usr/local/lib/libkineto.a \
+  /usr/lib/x86_64-linux-gnu/libpython3.13.so \
   /usr/local/lib/libopencv_shape.so.4.12.0 \
   /usr/local/lib/libopencv_highgui.so.4.12.0 \
   /usr/lib/x86_64-linux-gnu/libQt6Widgets.so.6.8.2 \
@@ -68,9 +66,7 @@ ControlCamera: \
   /usr/local/lib/libopencv_photo.so.4.12.0 \
   /usr/local/lib/libopencv_imgproc.so.4.12.0 \
   /usr/local/lib/libopencv_core.so.4.12.0 \
-  /usr/local/lib/libtorch_cpu.so \
-  /usr/local/lib/libc10.so \
-  /usr/local/lib/libtorch.so \
+  /usr/lib/x86_64-linux-gnu/libpython3.13.so \
   /usr/lib/gcc/x86_64-linux-gnu/14/libstdc++.so \
   /usr/lib/gcc/x86_64-linux-gnu/14/../../../x86_64-linux-gnu/libm.so \
   /usr/lib/gcc/x86_64-linux-gnu/14/../../../x86_64-linux-gnu/libm.so \
@@ -97,9 +93,9 @@ ControlCamera: \
   /usr/lib/gcc/x86_64-linux-gnu/14/libgcc.a \
   /usr/lib/gcc/x86_64-linux-gnu/14/crtendS.o \
   /usr/lib/gcc/x86_64-linux-gnu/14/../../../x86_64-linux-gnu/crtn.o \
-  /lib/x86_64-linux-gnu/libdl.so.2 \
   /lib/x86_64-linux-gnu/libm.so.6 \
-  /lib/x86_64-linux-gnu/libpthread.so.0 \
+  /lib/x86_64-linux-gnu/libz.so.1 \
+  /lib/x86_64-linux-gnu/libexpat.so.1 \
   /lib64/ld-linux-x86-64.so.2 \
   /lib/x86_64-linux-gnu/libEGL.so.1 \
   /lib/x86_64-linux-gnu/libfontconfig.so.1 \
@@ -113,7 +109,6 @@ ControlCamera: \
   /lib/x86_64-linux-gnu/libharfbuzz.so.0 \
   /lib/x86_64-linux-gnu/libmd4c.so.0 \
   /lib/x86_64-linux-gnu/libfreetype.so.6 \
-  /lib/x86_64-linux-gnu/libz.so.1 \
   /lib/x86_64-linux-gnu/libicui18n.so.76 \
   /lib/x86_64-linux-gnu/libicuuc.so.76 \
   /lib/x86_64-linux-gnu/libdouble-conversion.so.3 \
@@ -126,10 +121,7 @@ ControlCamera: \
   /lib/x86_64-linux-gnu/libavutil.so.59 \
   /lib/x86_64-linux-gnu/libswscale.so.8 \
   /lib/x86_64-linux-gnu/libtbb.so.12 \
-  /lib/x86_64-linux-gnu/librt.so.1 \
-  /usr/local/lib/libgomp-98b21ff3.so.1 \
   /lib/x86_64-linux-gnu/libGLdispatch.so.0 \
-  /lib/x86_64-linux-gnu/libexpat.so.1 \
   /lib/x86_64-linux-gnu/libxcb.so.1 \
   /lib/x86_64-linux-gnu/libatomic.so.1 \
   /lib/x86_64-linux-gnu/libpcre2-8.so.0 \
@@ -138,7 +130,7 @@ ControlCamera: \
   /lib/x86_64-linux-gnu/libbz2.so.1.0 \
   /lib/x86_64-linux-gnu/libbrotlidec.so.1 \
   /lib/x86_64-linux-gnu/libicudata.so.76 \
-  /lib/x86_64-linux-gnu/libgomp.so.1 \
+  /usr/local/lib/libgomp.so.1 \
   /lib/x86_64-linux-gnu/libjpeg.so.62 \
   /lib/x86_64-linux-gnu/libwebp.so.7 \
   /lib/x86_64-linux-gnu/libwebpmux.so.3 \
@@ -198,6 +190,8 @@ ControlCamera: \
   /lib/x86_64-linux-gnu/libXdmcp.so.6 \
   /lib/x86_64-linux-gnu/libsystemd.so.0 \
   /lib/x86_64-linux-gnu/libbrotlicommon.so.1 \
+  /lib/x86_64-linux-gnu/libdl.so.2 \
+  /lib/x86_64-linux-gnu/libpthread.so.0 \
   /lib/x86_64-linux-gnu/libsharpyuv.so.0 \
   /lib/x86_64-linux-gnu/libLerc.so.4 \
   /lib/x86_64-linux-gnu/libjbig.so.0 \
@@ -348,11 +342,7 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 
 /usr/local/lib/libopencv_xphoto.so.4.12.0:
 
-/usr/local/lib/libtorch.so:
-
-/usr/local/lib/libc10.so:
-
-/usr/local/lib/libkineto.a:
+/usr/lib/x86_64-linux-gnu/libpython3.13.so:
 
 /usr/local/lib/libopencv_shape.so.4.12.0:
 
@@ -404,11 +394,7 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 
 /usr/local/lib/libopencv_core.so.4.12.0:
 
-/usr/local/lib/libtorch_cpu.so:
-
-/usr/local/lib/libc10.so:
-
-/usr/local/lib/libtorch.so:
+/usr/lib/x86_64-linux-gnu/libpython3.13.so:
 
 /usr/lib/gcc/x86_64-linux-gnu/14/libstdc++.so:
 
@@ -462,11 +448,11 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 
 /usr/lib/gcc/x86_64-linux-gnu/14/../../../x86_64-linux-gnu/crtn.o:
 
-/lib/x86_64-linux-gnu/libdl.so.2:
-
 /lib/x86_64-linux-gnu/libm.so.6:
 
-/lib/x86_64-linux-gnu/libpthread.so.0:
+/lib/x86_64-linux-gnu/libz.so.1:
+
+/lib/x86_64-linux-gnu/libexpat.so.1:
 
 /lib64/ld-linux-x86-64.so.2:
 
@@ -494,8 +480,6 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 
 /lib/x86_64-linux-gnu/libfreetype.so.6:
 
-/lib/x86_64-linux-gnu/libz.so.1:
-
 /lib/x86_64-linux-gnu/libicui18n.so.76:
 
 /lib/x86_64-linux-gnu/libicuuc.so.76:
@@ -520,13 +504,7 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 
 /lib/x86_64-linux-gnu/libtbb.so.12:
 
-/lib/x86_64-linux-gnu/librt.so.1:
-
-/usr/local/lib/libgomp-98b21ff3.so.1:
-
 /lib/x86_64-linux-gnu/libGLdispatch.so.0:
-
-/lib/x86_64-linux-gnu/libexpat.so.1:
 
 /lib/x86_64-linux-gnu/libxcb.so.1:
 
@@ -544,7 +522,7 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 
 /lib/x86_64-linux-gnu/libicudata.so.76:
 
-/lib/x86_64-linux-gnu/libgomp.so.1:
+/usr/local/lib/libgomp.so.1:
 
 /lib/x86_64-linux-gnu/libjpeg.so.62:
 
@@ -663,6 +641,10 @@ CMakeFiles/ControlCamera.dir/ControlCamera.cpp.o:
 /lib/x86_64-linux-gnu/libsystemd.so.0:
 
 /lib/x86_64-linux-gnu/libbrotlicommon.so.1:
+
+/lib/x86_64-linux-gnu/libdl.so.2:
+
+/lib/x86_64-linux-gnu/libpthread.so.0:
 
 /lib/x86_64-linux-gnu/libsharpyuv.so.0:
 
