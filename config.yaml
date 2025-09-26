@@ -5,32 +5,37 @@
 model:
   primary_model_path: "/home/circuito/AMT/ControlCamera/ControlCamera/veinmodel.pt"
   classes_file: "/home/circuito/AMT/ControlCamera/ControlCamera/veinclasses.txt"
-  confidence_threshold: 0.5
+  confidence_threshold: 0.4 # Lower for better recall
+
+  # Multi-scale detection settings
+  multi_scale_detection: true
+  scales: [0.8, 1.0, 1.2]
+  nms_iou_threshold: 0.4
 
 # Camera Configuration - Using only camera0
 camera:
   port: 0 # Use /dev/video0
 
-  # Camera settings for vein detection
+  # Camera settings optimized for vein detection
   settings:
     auto_exposure: false
     auto_white_balance: false
-    brightness: 80
-    contrast: 40
-    exposure: -2
-    gain: 32
-    saturation: 16
-    sharpness: 24
-    white_balance: 4000
+    brightness: 85 # Slightly higher for better vein contrast
+    contrast: 45 # Increased contrast
+    exposure: -3 # Lower exposure for NIR
+    gain: 40 # Higher gain for NIR sensitivity
+    saturation: 10 # Lower saturation for NIR
+    sharpness: 28 # Higher sharpness for vein details
+    white_balance: 3800 # Optimized for NIR wavelength
 
 # Image Processing Configuration
 image_processing:
-  # CLAHE (Contrast Limited Adaptive Histogram Equalization)
+  # CLAHE (Contrast Limited Adaptive Histogram Equalization) - Optimized for veins
   clahe:
     enabled: true
-    clip_limit: 3.0
-    tile_grid_size_x: 8
-    tile_grid_size_y: 8
+    clip_limit: 4.0 # Higher clip limit for better vein enhancement
+    tile_grid_size_x: 6 # Smaller tiles for more local enhancement
+    tile_grid_size_y: 6
 
   # Image filters for vein enhancement
   filters:
@@ -42,8 +47,8 @@ image_processing:
 
     contrast:
       enabled: true
-      alpha: 1.8
-      beta: 10
+      alpha: 2.2 # Higher contrast enhancement for better vein visibility
+      beta: 15 # Increased brightness offset
 
     gaussian:
       enabled: true
@@ -66,4 +71,11 @@ image_processing:
 
     hessian:
       enabled: true
-      sigma_values: [1.0, 2.0, 3.0, 4.0]
+      sigma_values: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0] # More scales for better vessel detection
+
+    # Advanced vein enhancement settings
+    advanced_enhancement:
+      enabled: true
+      directional_filters: true
+      top_hat_enhancement: true
+      multi_scale_vessel_enhancement: true
