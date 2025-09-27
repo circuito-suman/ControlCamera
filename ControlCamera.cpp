@@ -787,12 +787,19 @@ cv::Mat ControlCamera::processFrameWithModel(const cv::Mat &inputFrame)
 
     try
     {
+        // Create a clean copy of the original frame to preserve colors
         cv::Mat processedFrame = inputFrame.clone();
+
+        // Ensure we're working with BGR format (OpenCV default)
+        if (processedFrame.channels() != 3)
+        {
+            cv::cvtColor(processedFrame, processedFrame, cv::COLOR_GRAY2BGR);
+        }
 
         // Run detection on the frame (works with or without model)
         std::vector<Detection> detections = runDetection(inputFrame);
 
-        // Draw detections on the frame
+        // Draw detections on the clean frame copy
         processedFrame = drawDetections(processedFrame, detections);
 
         return processedFrame;
@@ -905,63 +912,99 @@ void ControlCamera::detectWithPython(const cv::Mat &image, std::vector<Detection
 
 cv::Mat ControlCamera::drawDetections(const cv::Mat &frame, const std::vector<Detection> &detections)
 {
-    cv::Mat result = frame.clone();
-
-    for (const auto &detection : detections)
+    // Ensure we work with a BGR frame for consistent color handling
+    cv::Mat result;
+    if (frame.channels() == 1)
     {
-        // Draw bounding box
-        if (visualConfig.showBoxes)
+        cv::cvtColor(frame, result, cv::COLOR_GRAY2BGR);
+    }
+    else
+    {
+        result = frame.clone();
+    }
+
+    // Find the detection with highest confidence
+    float maxConfidence = -1.0f;
+    int bestDetectionIndex = -1;
+
+    for (size_t i = 0; i < detections.size(); i++)
+    {
+        if (detections[i].confidence > maxConfidence)
         {
-            drawBoundingBox(result, detection);
+            maxConfidence = detections[i].confidence;
+            bestDetectionIndex = static_cast<int>(i);
         }
+    }
+
+    for (size_t i = 0; i < detections.size(); i++)
+    {
+        const auto &detection = detections[i];
+        bool isHighestConfidence = (static_cast<int>(i) == bestDetectionIndex);
+
+        // Calculate center point of detection
+        cv::Point center(
+            detection.boundingBox.x + detection.boundingBox.width / 2,
+            detection.boundingBox.y + detection.boundingBox.height / 2);
+
+        // Draw cross-hair or point instead of bounding box
+        drawCrosshair(result, detection, center, isHighestConfidence);
 
         // Draw label with confidence
         if (visualConfig.showLabels || visualConfig.showConfidence)
         {
-            cv::Point labelPos(detection.boundingBox.x, detection.boundingBox.y - 10);
-            if (labelPos.y < 10)
-                labelPos.y = detection.boundingBox.y + 25;
-
-            drawLabel(result, detection, labelPos);
+            cv::Point labelPos(center.x + 15, center.y - 15);
+            drawLabel(result, detection, labelPos, isHighestConfidence);
         }
+    }
+
+    // Print highest confidence detection info
+    if (bestDetectionIndex >= 0)
+    {
+        const auto &bestDetection = detections[bestDetectionIndex];
+        qDebug() << "Highest confidence detection:"
+                 << QString::fromStdString(bestDetection.className)
+                 << "with confidence:" << bestDetection.confidence;
     }
 
     return result;
 }
 
-void ControlCamera::drawBoundingBox(cv::Mat &frame, const Detection &detection)
+void ControlCamera::drawCrosshair(cv::Mat &frame, const Detection &detection, const cv::Point &center, bool isHighestConfidence)
 {
-    // Ensure bounding box is within frame bounds
-    cv::Rect clampedBox = detection.boundingBox & cv::Rect(0, 0, frame.cols, frame.rows);
+    // Use only green colors - no color selection options
+    // Using BGR format: (Blue, Green, Red)
+    cv::Scalar crossColor = isHighestConfidence ? cv::Scalar(0, 255, 100) : cv::Scalar(0, 255, 0);  // Bright green for highest, normal green for others
+    cv::Scalar circleColor = isHighestConfidence ? cv::Scalar(0, 255, 200) : cv::Scalar(0, 200, 0); // Light green for highest, dark green for others
 
-    if (clampedBox.width > 0 && clampedBox.height > 0)
+    int thickness = isHighestConfidence ? visualConfig.boxThickness + 1 : visualConfig.boxThickness;
+    int crossSize = isHighestConfidence ? 25 : 20;  // Larger cross for highest confidence
+    int circleRadius = isHighestConfidence ? 8 : 5; // Larger circle for highest confidence
+
+    // Ensure center is within frame bounds
+    if (center.x < 0 || center.x >= frame.cols || center.y < 0 || center.y >= frame.rows)
+        return;
+
+    // Draw crosshair - horizontal line
+    cv::Point leftPoint(std::max(0, center.x - crossSize), center.y);
+    cv::Point rightPoint(std::min(frame.cols - 1, center.x + crossSize), center.y);
+    cv::line(frame, leftPoint, rightPoint, crossColor, thickness);
+
+    // Draw crosshair - vertical line
+    cv::Point topPoint(center.x, std::max(0, center.y - crossSize));
+    cv::Point bottomPoint(center.x, std::min(frame.rows - 1, center.y + crossSize));
+    cv::line(frame, topPoint, bottomPoint, crossColor, thickness);
+
+    // Draw center circle
+    cv::circle(frame, center, circleRadius, circleColor, -1); // Filled circle
+
+    // Draw outer ring for highest confidence detection
+    if (isHighestConfidence)
     {
-        cv::rectangle(frame, clampedBox, visualConfig.boxColor, visualConfig.boxThickness);
-
-        // Optional: Draw corner markers for better visibility
-        int cornerSize = 20;
-        cv::Point tl = clampedBox.tl();
-        cv::Point br = clampedBox.br();
-
-        // Top-left corner
-        cv::line(frame, tl, cv::Point(tl.x + cornerSize, tl.y), visualConfig.boxColor, visualConfig.boxThickness + 1);
-        cv::line(frame, tl, cv::Point(tl.x, tl.y + cornerSize), visualConfig.boxColor, visualConfig.boxThickness + 1);
-
-        // Top-right corner
-        cv::line(frame, cv::Point(br.x, tl.y), cv::Point(br.x - cornerSize, tl.y), visualConfig.boxColor, visualConfig.boxThickness + 1);
-        cv::line(frame, cv::Point(br.x, tl.y), cv::Point(br.x, tl.y + cornerSize), visualConfig.boxColor, visualConfig.boxThickness + 1);
-
-        // Bottom-left corner
-        cv::line(frame, cv::Point(tl.x, br.y), cv::Point(tl.x + cornerSize, br.y), visualConfig.boxColor, visualConfig.boxThickness + 1);
-        cv::line(frame, cv::Point(tl.x, br.y), cv::Point(tl.x, br.y - cornerSize), visualConfig.boxColor, visualConfig.boxThickness + 1);
-
-        // Bottom-right corner
-        cv::line(frame, br, cv::Point(br.x - cornerSize, br.y), visualConfig.boxColor, visualConfig.boxThickness + 1);
-        cv::line(frame, br, cv::Point(br.x, br.y - cornerSize), visualConfig.boxColor, visualConfig.boxThickness + 1);
+        cv::circle(frame, center, circleRadius + 3, cv::Scalar(255, 255, 255), 2); // White outer ring
     }
 }
 
-void ControlCamera::drawLabel(cv::Mat &frame, const Detection &detection, const cv::Point &position)
+void ControlCamera::drawLabel(cv::Mat &frame, const Detection &detection, const cv::Point &position, bool isHighestConfidence)
 {
     std::string labelText;
 
@@ -969,22 +1012,39 @@ void ControlCamera::drawLabel(cv::Mat &frame, const Detection &detection, const 
     if (visualConfig.showLabels && visualConfig.showConfidence)
     {
         labelText = detection.className + ": " + std::to_string(static_cast<int>(detection.confidence * 100)) + "%";
+        if (isHighestConfidence)
+        {
+            labelText = "[BEST] " + labelText; // Mark the highest confidence
+        }
     }
     else if (visualConfig.showLabels)
     {
         labelText = detection.className;
+        if (isHighestConfidence)
+        {
+            labelText = "[BEST] " + labelText;
+        }
     }
     else if (visualConfig.showConfidence)
     {
         labelText = std::to_string(static_cast<int>(detection.confidence * 100)) + "%";
+        if (isHighestConfidence)
+        {
+            labelText = "[BEST] " + labelText;
+        }
     }
 
     if (!labelText.empty())
     {
+        // Choose colors based on whether this is the highest confidence detection
+        cv::Scalar bgColor = isHighestConfidence ? cv::Scalar(0, 0, 255) : visualConfig.boxColor;        // Red bg for highest
+        cv::Scalar textColor = isHighestConfidence ? cv::Scalar(255, 255, 255) : visualConfig.textColor; // White text for highest
+        float fontScale = isHighestConfidence ? visualConfig.fontScale * 1.2f : visualConfig.fontScale;  // Larger text for highest
+
         // Get text size for background rectangle
         int baseline = 0;
         cv::Size textSize = cv::getTextSize(labelText, cv::FONT_HERSHEY_SIMPLEX,
-                                            visualConfig.fontScale, 1, &baseline);
+                                            fontScale, 1, &baseline);
 
         // Draw background rectangle for better text visibility
         cv::Rect textBackground(position.x, position.y - textSize.height - 5,
@@ -993,12 +1053,12 @@ void ControlCamera::drawLabel(cv::Mat &frame, const Detection &detection, const 
         // Ensure text background is within frame bounds
         textBackground = textBackground & cv::Rect(0, 0, frame.cols, frame.rows);
 
-        cv::rectangle(frame, textBackground, visualConfig.boxColor, -1); // Filled rectangle
+        cv::rectangle(frame, textBackground, bgColor, -1); // Filled rectangle
 
         // Draw text
         cv::Point textPos(position.x + 5, position.y - 5);
         cv::putText(frame, labelText, textPos, cv::FONT_HERSHEY_SIMPLEX,
-                    visualConfig.fontScale, visualConfig.textColor, 1, cv::LINE_AA);
+                    fontScale, textColor, 1, cv::LINE_AA);
     }
 }
 
@@ -1020,12 +1080,14 @@ void ControlCamera::setConfidenceThreshold(float threshold)
 
 void ControlCamera::setBoxColor(const cv::Scalar &color)
 {
-    visualConfig.boxColor = color;
+    // Always use green colors - ignore color parameter
+    visualConfig.boxColor = cv::Scalar(0, 255, 0); // Green only
 }
 
 void ControlCamera::setTextColor(const cv::Scalar &color)
 {
-    visualConfig.textColor = color;
+    // Always use white text - ignore color parameter
+    visualConfig.textColor = cv::Scalar(255, 255, 255); // White text only
 }
 
 void ControlCamera::showBoundingBoxes(bool show)

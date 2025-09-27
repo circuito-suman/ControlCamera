@@ -195,8 +195,8 @@ private:
     cv::Mat formatForYolo(const cv::Mat &source);
     cv::Mat matToNumpyArray(const cv::Mat &mat);
     cv::Mat drawDetections(const cv::Mat &frame, const std::vector<Detection> &detections);
-    void drawBoundingBox(cv::Mat &frame, const Detection &detection);
-    void drawLabel(cv::Mat &frame, const Detection &detection, const cv::Point &position);
+    void drawCrosshair(cv::Mat &frame, const Detection &detection, const cv::Point &center, bool isHighestConfidence);
+    void drawLabel(cv::Mat &frame, const Detection &detection, const cv::Point &position, bool isHighestConfidence = false);
 
     void setupUI();
     void setupConnections();

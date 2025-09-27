@@ -7,6 +7,17 @@ model:
   classes_file: "/home/circuito/AMT/ControlCamera/ControlCamera/veinclasses.txt"
   confidence_threshold: 0.4 # Lower for better recall
 
+  # GPU/CPU Configuration for RTX 3050 6GB
+  # IMPORTANT: Change these settings to use your RTX 3050:
+  # 1. Set use_gpu: true
+  # 2. Set device: "cuda:0"
+  device: "cpu" # Current: CPU mode
+  use_gpu: false # Current: GPU disabled
+
+  # To enable RTX 3050 6GB GPU acceleration, change to:
+  # device: "cuda:0"
+  # use_gpu: true
+
   # Multi-scale detection settings
   multi_scale_detection: true
   scales: [0.8, 1.0, 1.2]

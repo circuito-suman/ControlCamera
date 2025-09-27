@@ -297,6 +297,7 @@ class VeinDetector:
         self.model = None
         self.class_names = []
         self.vein_processor = VeinProcessor()
+        self.device = self._setup_device()
         
         # Use config paths if not provided
         if model_path is None:
@@ -315,13 +316,40 @@ class VeinDetector:
         
         self.load_model(model_path)
         self.load_classes(class_path)
+    
+    def _setup_device(self):
+        """Setup the device for YOLO inference based on configuration"""
+        try:
+            use_gpu = get_config('model.use_gpu', False)
+            device_config = get_config('model.device', 'cpu')
+            
+            if use_gpu and device_config != 'cpu':
+                # Check if CUDA is available
+                import torch
+                if torch.cuda.is_available():
+                    # For RTX 3050, use cuda:0
+                    device = "cuda:0" if device_config == "cuda" else device_config
+                    print(f"Using GPU device: {device} (RTX 3050 6GB)")
+                    return device
+                else:
+                    print("CUDA not available, falling back to CPU")
+                    return "cpu"
+            else:
+                print("Using CPU for inference")
+                return "cpu"
+        except Exception as e:
+            print(f"Error setting up device, using CPU: {e}")
+            return "cpu"
         
     def load_model(self, model_path):
         """Load the YOLO .pt model"""
         try:
             if os.path.exists(model_path):
                 self.model = YOLO(model_path)
-                print(f"YOLO model loaded successfully from {model_path}")
+                # Move model to the configured device
+                if hasattr(self.model, 'to'):
+                    self.model.to(self.device)
+                print(f"YOLO model loaded successfully from {model_path} on device: {self.device}")
                 return True
             else:
                 print(f"Model file not found: {model_path}")
@@ -363,8 +391,8 @@ class VeinDetector:
             # Apply vein enhancement preprocessing
             enhanced_frame = self.preprocess_frame(frame)
             
-            # Run YOLO inference
-            results = self.model(enhanced_frame, conf=conf_threshold, verbose=False)
+            # Run YOLO inference with device specification
+            results = self.model(enhanced_frame, conf=conf_threshold, verbose=False, device=self.device)
             
             # Extract detection information
             boxes = []
